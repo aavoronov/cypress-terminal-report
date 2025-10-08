@@ -78,14 +78,13 @@ function installLogsPrinter(on: Cypress.PluginEvents, options: PluginOptions = {
   on('task', {
     [CONSTANTS.TASK_NAME]: function (data: MessageData) {
       logDebug(
-        `${CONSTANTS.TASK_NAME}: Received ${data.messages.length} messages, for ${data.spec}:${data.test}, with state ${data.state}.`
+        `${CONSTANTS.TASK_NAME}: Received ${data.fileMessages.length} messages, for ${data.spec}:${data.test}, with state ${data.state}.`
       );
-      let messages = data.messages;
 
       const terminalMessages =
         typeof compactLogs === 'number' && compactLogs >= 0
-          ? getCompactLogs(messages, compactLogs, logDebug)
-          : messages;
+          ? getCompactLogs(data.terminalMessages, compactLogs, logDebug)
+          : data.terminalMessages;
 
       const isHookAndShouldLog =
         data.isHook && (includeSuccessfulHookLogs || data.state === 'failed');
@@ -94,9 +93,9 @@ function installLogsPrinter(on: Cypress.PluginEvents, options: PluginOptions = {
         if (data.state === 'failed' || printLogsToFile === 'always' || isHookAndShouldLog) {
           let outputFileMessages =
             typeof outputCompactLogs === 'number'
-              ? getCompactLogs(messages, outputCompactLogs, logDebug)
+              ? getCompactLogs(data.fileMessages, outputCompactLogs, logDebug)
               : outputCompactLogs === false
-                ? messages
+                ? data.fileMessages
                 : terminalMessages;
 
           logDebug(
