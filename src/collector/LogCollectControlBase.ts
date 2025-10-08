@@ -1,6 +1,6 @@
 import CtrError from '../CtrError';
 import type {ExtendedSupportOptions} from '../installLogsCollector.types';
-import LogCollectorState from './LogCollectorState';
+import LogCollectorState, {StackLogArray} from './LogCollectorState';
 import type {MessageData, SetOptional, State, TestData} from '../types';
 
 export default abstract class LogCollectControlBase {
@@ -45,16 +45,20 @@ export default abstract class LogCollectControlBase {
     const prepareLogs = () =>
       this.prepareLogs(logStackIndex, {mochaRunnable, testState, testTitle, testLevel});
 
-    const buildDataMessage = () => ({
-      spec: spec,
-      test: testTitle,
-      messages: prepareLogs(),
-      state: testState,
-      level: testLevel,
-      consoleTitle: options.consoleTitle,
-      isHook: options.isHook,
-      continuous: options.continuous,
-    });
+    const buildDataMessage = () => {
+      const {fileMessages, terminalMessages} = prepareLogs();
+      return {
+        spec: spec,
+        test: testTitle,
+        fileMessages,
+        terminalMessages,
+        state: testState,
+        level: testLevel,
+        consoleTitle: options.consoleTitle,
+        isHook: options.isHook,
+        continuous: options.continuous,
+      };
+    };
 
     this.triggerSendTask(buildDataMessage, options.noQueue || false, wait);
   }
@@ -72,19 +76,27 @@ export default abstract class LogCollectControlBase {
       throw new CtrError(`Domain exception: log stack null.`);
     }
 
+    let fileLogs: StackLogArray = [...logsCopy];
+
     if (this.config.filterLog) {
       logsCopy = logsCopy.filter(this.config.filterLog);
+      // potential for separate filtering too
+      fileLogs = fileLogs.filter(this.config.filterLog);
     }
 
     if (this.config.processLog) {
       logsCopy = logsCopy.map(this.config.processLog);
     }
 
+    if (this.config.processFileLog) {
+      fileLogs = fileLogs.map(this.config.processFileLog);
+    }
+
     if (this.config.collectTestLogs) {
       this.config.collectTestLogs(testData, logsCopy);
     }
 
-    return logsCopy;
+    return {fileMessages: fileLogs, terminalMessages: logsCopy};
   }
 
   getSpecFilePath(mochaRunnable: Mocha.Runnable) {

@@ -46,7 +46,8 @@ export type MessageData = {
   spec: string;
   test: string;
   state: State;
-  messages: Log[];
+  fileMessages: Log[];
+  terminalMessages: Log[];
   consoleTitle?: string;
   level?: number;
   isHook?: boolean;
