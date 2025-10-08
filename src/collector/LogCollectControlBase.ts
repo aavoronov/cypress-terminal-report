@@ -42,14 +42,13 @@ export default abstract class LogCollectControlBase {
       testTitle += ` (Attempt ${mochaRunnable && mochaRunnable['_currentRetry'] + 1})`;
     }
 
-    const prepareLogs = (dest: 'terminal' | 'file') =>
-      this.prepareLogs(logStackIndex, {mochaRunnable, testState, testTitle, testLevel}, dest);
+    const prepareLogs = () =>
+      this.prepareLogs(logStackIndex, {mochaRunnable, testState, testTitle, testLevel});
 
     const buildDataMessage = () => ({
       spec: spec,
       test: testTitle,
-      terminalMessages: prepareLogs('terminal'),
-      fileMessages: prepareLogs('file'),
+      messages: prepareLogs(),
       state: testState,
       level: testLevel,
       consoleTitle: options.consoleTitle,
@@ -66,7 +65,7 @@ export default abstract class LogCollectControlBase {
     wait: number
   ): void;
 
-  prepareLogs(logStackIndex: number, testData: TestData, dest: 'terminal' | 'file') {
+  prepareLogs(logStackIndex: number, testData: TestData) {
     let logsCopy = this.collectorState.consumeLogStacks(logStackIndex);
 
     if (logsCopy === null) {
@@ -77,14 +76,8 @@ export default abstract class LogCollectControlBase {
       logsCopy = logsCopy.filter(this.config.filterLog);
     }
 
-    if (dest === 'terminal') {
-      if (this.config.processLog) {
-        logsCopy = logsCopy.map(this.config.processLog);
-      }
-    } else {
-      if (this.config.processFileLog) {
-        logsCopy = logsCopy.map(this.config.processFileLog);
-      }
+    if (this.config.processLog) {
+      logsCopy = logsCopy.map(this.config.processLog);
     }
 
     if (this.config.collectTestLogs) {

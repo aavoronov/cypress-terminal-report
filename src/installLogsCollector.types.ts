@@ -23,8 +23,6 @@ export interface SupportOptions {
    */
   processLog?: null | ((args: Log) => Log);
 
-  processFileLog?: null | ((args: Log) => Log);
-
   /**
    * Callback to collect each test case's logs after its run.
    * @default undefined
